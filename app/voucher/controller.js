@@ -31,6 +31,7 @@ module.exports = {
         try {
             const category = await Category.find();
             const nominal = await Nominal.find();
+            
             res.render('admin/voucher/create', {
                 category,
                 nominal
