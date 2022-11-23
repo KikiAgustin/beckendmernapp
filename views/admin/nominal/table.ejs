@@ -12,8 +12,8 @@
       <% for(let i = 0; i < nominal.length; i++ ) { %>
         <tr>
           <td><%= i+1 %></td>
-          <td><%= nominal[i].cointName %></td>
-          <td><%= nominal[i].cointQuantity %></td>
+          <td><%= nominal[i].coinName %></td>
+          <td><%= nominal[i].coinQuantity %></td>
           <td><%= nominal[i].price %></td>
           <td>
             <form action="/nominal/delete/<%= nominal[i]._id  %>?_method=DELETE" method="POST">

@@ -48,12 +48,12 @@
                         <select class="form-control select2" multiple="multiple" style="width: 100%;" name="banks" data-placeholder="Pilih bank" required>
                             <% banks.forEach(bank => { %>
                                 <option value="<%= bank._id %>"
-                                    <% payment.banks.forEach(nameBank => { %>
-                                        <% if(nameBank._id.toString() === bank._id.toString()) { %>
+                                    <% payment.banks.forEach(bankName => { %>
+                                        <% if(bankName._id.toString() === bank._id.toString()) { %>
                                             selected
                                         <% } %>
                                     <% }) %>
-                                    ><%= bank.name %> - <%= bank.nameBank %>  - <%= bank.noRekening %> </option>
+                                    ><%= bank.name %> - <%= bank.bankName %>  - <%= bank.noRekening %> </option>
                             <%  }) %>
                         </select>
                         </div>
