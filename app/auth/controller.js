@@ -10,6 +10,9 @@ module.exports = {
         try {
             const payload = req.body
 
+            console.log("cek data >>")
+            console.log(payload);
+
             if(req.file){
                 let tmp_path = req.file.path;
                 let originalExt = req.file.originalname.split('.')[req.file.originalname.split('.').length - 1];
@@ -53,9 +56,6 @@ module.exports = {
                 res.status(201).json({data: player})
             }
 
-            res.status(201).json({
-                message: payload
-            })
         } catch (err) {
             if(err && err.name === "ValidationError") {
                 return res.status(422).json({
@@ -69,43 +69,51 @@ module.exports = {
     },
 
     signin: async(req, res, next) => {
-        const {email, password} = req.body
 
-        Player.findOne({email: email}).then((player) => {
+        try {
 
-            if(player){
+            const {email, password} = req.body
 
-                const checkPassword = bcrypt.compareSync(password, player.password)
-                if(checkPassword){
-                    const token = jwt.sign({
-                        plyer: {
-                            id: player.id,
-                            email: player.email,
-                            nama: player.nama,
-                            phoneNumber: player.phoneNumber,
-                            avatar: player.avatar,
-                        }
-                    }, config.jwtKey)
+            Player.findOne({email: email}).then((player) => {
 
-                    res.status(200).json({token})
+                if(player){
+    
+                    const checkPassword = bcrypt.compareSync(password, player.password)
+                    if(checkPassword){
+                        const token = jwt.sign({
+                            plyer: {
+                                id: player.id,
+                                email: player.email,
+                                nama: player.nama,
+                                phoneNumber: player.phoneNumber,
+                                avatar: player.avatar,
+                            }
+                        }, config.jwtKey)
+    
+                        res.status(200).json({token})
+                    }else {
+                        res.status(403).json({
+                            message: "Password yang anda masukan salah"
+    
+                        })
+                    }
+    
                 }else {
                     res.status(403).json({
-                        message: "Password yang anda masukan salah"
-
+                        message: "Email yang anda masukan belum terdaftar"
                     })
                 }
-
-            }else {
-                res.status(403).json({
-                    message: "Email yang anda masukan belum terdaftar"
+    
+            }).catch((err)=>{
+                res.status(500).json({
+                    message: err.message || `Internal server error`
                 })
-            }
-
-        }).catch((err)=>{
-            res.status(500).json({
-                message: err.message || `Internal server error`
+                next()
             })
-            next()
-        })
+        } catch (err) {
+            res.status(500).json({message: err.message || `Internal server error`})
+        }
+
+        
     }
 }
