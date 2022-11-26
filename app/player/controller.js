@@ -4,6 +4,7 @@ const Category = require('../category/model')
 const Bank = require('../bank/model')
 const Payment = require('../payment/model')
 const Nominal = require('../nominal/model')
+const Transaction = require('../transaction/model')
 
 module.exports = {
     landingPage: async(req, res) => {
@@ -48,11 +49,9 @@ module.exports = {
     checkout: async (req, res) => {
         try {
           const { accountUser, name, nominal, voucher, payment, bank } = req.body
-          console.log("voucher >>")
-          console.log(voucher)
     
           const res_voucher = await Voucher.findOne({ _id: voucher })
-            .select('name caegory _id thumbnail user')
+            .select('name category _id thumbnail user')
             .populate('category')
             .populate('user')
     
@@ -73,9 +72,6 @@ module.exports = {
           let tax = (10 / 100) * res_nominal._doc.price;
           let value = res_nominal._doc.price - tax;
     
-    
-          console.log("res_payment >>")
-          console.log(res_payment._doc)
           const payload = {
             historyVoucherTopup: {
               gameName: res_voucher._doc.name,
@@ -96,7 +92,7 @@ module.exports = {
             accountUser: accountUser,
             tax: tax,
             value: value,
-            // player: req.player._id,
+            player: req.player._id,
             historyUser: {
               name: res_voucher._doc.user?.name,
               phoneNumber: res_voucher._doc.user?.phoneNumber
@@ -106,19 +102,72 @@ module.exports = {
             user: res_voucher._doc.user?._id
     
           }
-    
+
           const transaction = new Transaction(payload)
-    
           await transaction.save()
     
           res.status(201).json({
             data: transaction
-          })
-    
+          })  
         } catch (err) {
           res.status(500).json({ message: err.message || `Internal server error` })
         }
-      }
+    },
 
-      
+    history: async(req, res) => {
+      try {
+        const {status = '' } = req.query;
+        
+        let criteria = {}
+
+        if(status.length){
+          criteria = {
+            ...criteria,
+            status : { $regex : `${status}`, $options: 'i' }
+          }
+        }
+
+        if(req.player._id) {
+          criteria = {
+            ...criteria,
+            player : req.player._id
+          }
+        }
+
+        let total = await Transaction.aggregate([
+          {$match: criteria},
+          {
+            $group: {
+              _id: null,
+              value: {$sum: "$value"}
+            }
+          }
+        ])
+
+        const history = await Transaction.find(criteria)
+
+        res.status(200).json({
+          data: history,
+          total: total.length ? total[0].value : 0
+        })
+      } catch (err) {
+        res.status(500).json({message: err.message || 'Internal Server Error'})
+      }
+    },
+
+    historyDetail: async(req, res) => {
+      try {
+        const {id} = req.params
+
+        const detail = await Transaction.findOne({_id : id})
+
+        if(!detail) return res.status(404).json({message: 'Data tidak ditemukan'})
+
+        res.status(200).json({
+          data: detail
+        })
+      } catch (err) {
+        res.status(500).json({message: err.message || `Internal server error`})
+      }
+    }
 }
